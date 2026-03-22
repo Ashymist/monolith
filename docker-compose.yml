@@ -1,0 +1,48 @@
+name: monolith
+services:
+  backend:
+    image: ashymist/monolith-backend
+    pull_policy: always
+    container_name: backend
+    networks:
+      - monolith
+    environment:
+      - ASPNETCORE_URLS=http://*:5054
+      - ConnectionString_monolith=Host=postgres;Port=5432;Database=monolitdb;Username=admin;Password=secret;
+    ports:
+      - "5054:5054"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: ~/monolith/storage
+        target: /app/storage
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    networks:
+      - monolith
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=monolitdb
+      - PGPORT=5432
+    ports:
+      - "5450:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"] 
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+volumes:
+  postgres_data:
+
+networks:
+  monolith:
+    name: monolith
