@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using Microsoft.EntityFrameworkCore;
 
 public static class MapEndpointsHelper
@@ -21,7 +22,7 @@ public static class MapEndpointsHelper
                 using var filestream = File.Create(fullFilePath);
                 await file.CopyToAsync(filestream);
 
-                string reference = $"/storage/{normalizedPath}/{file.FileName}";
+                string reference = $"/storage/{(string.IsNullOrEmpty(normalizedPath) ? "" : normalizedPath + "/")}{file.FileName}";
 
                 StoredFile storedFile = new StoredFile
                 {
@@ -95,6 +96,38 @@ public static class MapEndpointsHelper
                     .ToListAsync();
                     return Results.Ok(fileDtos);
                 }
+            }
+
+            return Results.NotFound();
+        });
+
+        app.MapGet("/api/download/storage/{*path}", async(string? path, FileStorageContext context, HttpResponse res) =>
+        {
+            string normalizedPath = NormalizePath(path);
+            string fullpath = $"{realpath}/{normalizedPath}";
+
+
+            if(File.Exists(fullpath))
+            {
+                res.Headers["X-Accel-Redirect"] = $"/internal-storage/{normalizedPath}";
+                res.Headers["Content-Disposition"] = $"attachment; filename=\"{Path.GetFileName(fullpath)}\"";
+                return Results.Empty;
+            } else if (Directory.Exists(fullpath))
+            {
+                res.Headers["Content-Type"] = "application/zip";
+                res.Headers["Content-Disposition"] = $"attachment; filename=\"{Path.GetFileName(fullpath)}.zip\"";
+
+                using var zip = new ZipArchive(res.Body, ZipArchiveMode.Create, leaveOpen:true);
+
+                foreach(var file in Directory.GetFiles(fullpath, "*", SearchOption.AllDirectories))
+                {
+                    var entryName = Path.GetRelativePath(fullpath, file);
+                    var entry = zip.CreateEntry(entryName, CompressionLevel.Fastest);
+                    await using var entryStream = entry.Open();
+                    await using var fileStream = File.OpenRead(file);
+                    await fileStream.CopyToAsync(entryStream);
+                }
+                return Results.Empty;
             }
 
             return Results.NotFound();

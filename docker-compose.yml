@@ -40,6 +40,21 @@ services:
       timeout: 5s
       retries: 5
   
+  nginx:
+    image: ashymist/monolith-nginx
+    pull_policy: always
+    container_name: nginx
+    networks:
+      - monolith
+    ports:
+      - "8000:80"
+    depends_on:
+      - backend
+    volumes:
+      - type: bind
+        source: ~/monolith/storage
+        target: /app/storage
+  
 volumes:
   postgres_data:
 
