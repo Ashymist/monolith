@@ -166,6 +166,65 @@ public static class MapEndpointsHelper
 
             return Results.NotFound();
         });
+
+        app.MapPatch("api/storage/{*path}", async (string? path, FileStorageContext context, HttpRequest req) =>
+        {
+            if(string.IsNullOrEmpty(path)) return Results.BadRequest("Can't change the root folder");
+            string normalizedPath = NormalizePath(path);
+
+            string fullpath = $"{realpath}/{normalizedPath}";
+            string? newPathQuery = req.Query["newpath"];
+            string? newNameQuery = req.Query["newname"];
+            string? normalizedNewPathQuery = NormalizePath(newPathQuery);
+            string? filename = Path.GetFileName(fullpath);
+            string? relativePath = NormalizePath(Path.GetDirectoryName(normalizedPath));
+            
+            if (File.Exists(fullpath))
+            {
+                string newPath = $"{realpath}/";
+                if (!string.IsNullOrEmpty(newPathQuery)) newPath = Path.Combine(newPath,normalizedNewPathQuery);
+                else newPath = Path.Combine(newPath,relativePath);
+                if (!string.IsNullOrEmpty(newNameQuery)) newPath = Path.Combine(newPath,newNameQuery);
+                else newPath = Path.Combine(newPath,filename);
+
+                if(!Directory.Exists(Path.GetDirectoryName(newPath))) Directory.CreateDirectory(Path.GetDirectoryName(newPath));
+                File.Move(fullpath,newPath);
+
+
+                string referenceQuery = $"/storage/{normalizedPath}";
+                var file = context.Files.FirstOrDefault(f => f.Reference == referenceQuery);
+                file.Reference = $"/storage/{(string.IsNullOrEmpty(normalizedNewPathQuery) ? (string.IsNullOrEmpty(relativePath) ? string.Empty : relativePath + "/") : normalizedNewPathQuery + "/")}{(string.IsNullOrEmpty(newNameQuery) ? filename : newNameQuery)}";
+                file.Name = string.IsNullOrEmpty(newNameQuery) ? filename : newNameQuery;
+                file.LastUpdated = DateTime.UtcNow;
+                context.SaveChanges();
+                return Results.Ok();
+            } else if (Directory.Exists(fullpath))
+            {
+                string? fodlerName = Path.GetFileName(fullpath);
+                string newPath = $"{realpath}/";
+                if (!string.IsNullOrEmpty(newPathQuery)) newPath = Path.Combine(newPath,normalizedNewPathQuery);
+                else newPath = Path.Combine(newPath,relativePath);
+
+                if (!string.IsNullOrEmpty(newNameQuery)) newPath = Path.Combine(newPath,newNameQuery);
+                else newPath = Path.Combine(newPath,filename);
+
+                if(!Directory.Exists(Path.GetDirectoryName(newPath))) Directory.CreateDirectory(Path.GetDirectoryName(newPath));
+                Directory.Move(fullpath,newPath);
+
+                var files = context.Files.Where(f => f.Reference.StartsWith($"/storage/{normalizedPath}"));
+                foreach(var file in files)
+                {
+                    file.Reference = $"/storage/{(string.IsNullOrEmpty(normalizedNewPathQuery) ? 
+                    (string.IsNullOrEmpty(relativePath) ? string.Empty : relativePath + "/") 
+                    : normalizedNewPathQuery + "/")}{(string.IsNullOrEmpty(newNameQuery) ? filename : newNameQuery)}/{file.Name}";
+                }
+                context.SaveChanges();
+
+                return Results.Ok();
+
+            }
+            return Results.NotFound();
+        });
     }
 
     public static string NormalizePath(string? path)
