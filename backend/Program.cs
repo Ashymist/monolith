@@ -14,7 +14,7 @@ else
 {
     builder.Services.AddDbContext<FileStorageContext>(options =>
         options.UseNpgsql(Environment.GetEnvironmentVariable("ConnectionString_monolith")));
-        realpath = "/app/storage";
+    realpath = "/app/storage";
 }
 
 var app = builder.Build();

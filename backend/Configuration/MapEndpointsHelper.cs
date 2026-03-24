@@ -132,6 +132,40 @@ public static class MapEndpointsHelper
 
             return Results.NotFound();
         });
+
+        app.MapDelete("/api/storage/{*path}", async (string? path, FileStorageContext context) =>
+        {
+            string normalizedPath = NormalizePath(path);
+            string fullpath = $"{realpath}/{normalizedPath}";
+
+            if (File.Exists(fullpath))
+            {
+                
+                File.Delete(fullpath);
+                context.Remove(context.Files.FirstOrDefault(f => f.Reference.StartsWith($"/storage/{Path.GetDirectoryName(normalizedPath)}") && f.Name == Path.GetFileName(normalizedPath)));
+                context.SaveChanges();
+                return Results.Ok();
+            } else if (Directory.Exists(fullpath))
+            {
+                
+                if (!string.IsNullOrEmpty(normalizedPath)) {
+                    context.RemoveRange(context.Files.Where(f=>f.Reference.StartsWith($"/storage/{normalizedPath}/")));
+                    Directory.Delete(fullpath, true);
+                }
+                else {
+                    context.RemoveRange(context.Files);
+                    var files = Directory.GetFiles(realpath, "*", SearchOption.AllDirectories);
+                    foreach(var file in files)
+                    {
+                        File.Delete(file);
+                    }
+                    context.SaveChanges();
+                    return Results.Ok();
+                }
+            }
+
+            return Results.NotFound();
+        });
     }
 
     public static string NormalizePath(string? path)
