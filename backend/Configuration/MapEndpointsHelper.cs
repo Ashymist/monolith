@@ -25,6 +25,8 @@ public static class MapEndpointsHelper
 
                 // string reference = $"/storage/{(string.IsNullOrEmpty(normalizedPath) ? "" : normalizedPath + "/")}{file.FileName}";
 
+                filestream.Seek(0, SeekOrigin.Begin);
+
                 StoredFile storedFile = new StoredFile
                 {
                     FilePath = fullFilePath,
@@ -43,6 +45,16 @@ public static class MapEndpointsHelper
             return Results.Conflict();
 
         }).DisableAntiforgery();
+
+        /*
+
+        app.MapPost("/api/login", async (string password, FileStorageContext context) =>
+        {
+            if(context.Settings)
+            {
+                // Handle login logic
+            }
+        });
 
         /*
 

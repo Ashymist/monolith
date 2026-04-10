@@ -22,6 +22,8 @@ out/
 
 claude_rules/
 
+docker-compose.override.yml
+
 # React specific
 .env
 .env.local
