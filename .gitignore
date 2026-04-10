@@ -20,6 +20,8 @@ out/
 .vercel/
 .netlify/
 
+claude_rules/
+
 # React specific
 .env
 .env.local

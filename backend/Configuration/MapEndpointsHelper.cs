@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using FileTypeChecker;
 using Microsoft.EntityFrameworkCore;
 
 public static class MapEndpointsHelper
@@ -7,8 +8,8 @@ public static class MapEndpointsHelper
     {
         app.MapPost("/api/storage/{*path}", async (IFormFile file, string? path, FileStorageContext context) =>
         {
-            string? normalizedPath = NormalizePath(path);
-            var directory = $"{realpath}/{normalizedPath}";
+            string normalizedPath = NormalizePath(path);
+            string directory = $"{realpath}/{normalizedPath}";
 
             if(!Directory.Exists(directory))
             {
@@ -22,14 +23,15 @@ public static class MapEndpointsHelper
                 using var filestream = File.Create(fullFilePath);
                 await file.CopyToAsync(filestream);
 
-                string reference = $"/storage/{(string.IsNullOrEmpty(normalizedPath) ? "" : normalizedPath + "/")}{file.FileName}";
+                // string reference = $"/storage/{(string.IsNullOrEmpty(normalizedPath) ? "" : normalizedPath + "/")}{file.FileName}";
 
                 StoredFile storedFile = new StoredFile
                 {
-                    Reference = reference,
-                    Type = file.ContentType,
+                    FilePath = fullFilePath,
+                    Type = FileTypeValidator.GetFileType(filestream).Name,
                     ByteSize = file.Length,
                     LastUpdated = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
                     Name = file.FileName
                 };
 
@@ -41,6 +43,8 @@ public static class MapEndpointsHelper
             return Results.Conflict();
 
         }).DisableAntiforgery();
+
+        /*
 
         app.MapGet("/api/storage/{*path}", async(string? path, HttpRequest req, FileStorageContext context) =>
         {
@@ -225,6 +229,7 @@ public static class MapEndpointsHelper
             }
             return Results.NotFound();
         });
+        */
     }
 
     public static string NormalizePath(string? path)
