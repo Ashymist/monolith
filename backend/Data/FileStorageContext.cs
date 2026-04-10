@@ -8,4 +8,7 @@ public class FileStorageContext : DbContext
     }
 
     public DbSet<StoredFile> Files { get; set; }
+    public DbSet<Settings> Settings { get; set; }
+    public DbSet<ShareLink> ShareLinks { get; set; }
+    public DbSet<Session> Sessions { get; set; }
 }
