@@ -1,5 +1,3 @@
-using FileTypeChecker.Abstracts;
-
 public class StoredFile
 {
     public int Id {get;set;}
