@@ -7,7 +7,7 @@ services:
     networks:
       - monolith
     environment:
-      - DEFAULT_PASSWORD=${DEFAULT_PASSWORD}
+      - DEFAULT_PASSWORD=${DEFAULT_PASSWORD:-password}
       - ASPNETCORE_URLS=http://*:5054
       - ConnectionString_monolith=Host=postgres;Port=5432;Database=monolitdb;Username=admin;Password=secret;
     ports:
@@ -32,7 +32,7 @@ services:
       - POSTGRES_DB=monolitdb
       - PGPORT=5432
     ports:
-      - "5450:5432"
+      - "6450:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

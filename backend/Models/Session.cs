@@ -6,12 +6,14 @@ public class Session
 
     public required string UserAgent {get;set;}
 
-    public required DateTime CreatedAt {get;set;}
+    public required DateTimeOffset CreatedAt {get;set;}
 
-    public required DateTime ExpireAt {get;set;}
+    public required DateTimeOffset ExpireAt {get;set;}
 
     public required string IP {get;set;}
 
-    public required DateTime LastUsedAt {get;set;}
+    public required DateTimeOffset LastUsedAt {get;set;}
+
+    public required byte[] Value {get;set;}
 
 }

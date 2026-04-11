@@ -10,7 +10,7 @@ string realpath;
 if(builder.Environment.IsDevelopment())
 {
     builder.Services.AddDbContext<FileStorageContext>(options =>
-        options.UseNpgsql("Host=localhost;Port=5450;Database=monolitdb;Username=admin;Password=secret;"));
+        options.UseNpgsql("Host=localhost;Port=6450;Database=monolitdb;Username=admin;Password=secret;"));
     realpath = Path.Combine(Environment.GetEnvironmentVariable("HOME"),"monolith/storage");
 }
 else
@@ -20,12 +20,19 @@ else
     realpath = "/app/storage";
 }
 
+builder.Services.AddSingleton<IPostConfigureOptions<CookieAuthenticationOptions>,PostConfigureCookieOptions>();
+
+builder.Services.AddSingleton<ITicketStore, SessionStore>();
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
         options.SlidingExpiration = true;
+        
     });
+
+
 
 var CookiePolicyOptions = new CookiePolicyOptions
     {
@@ -34,7 +41,6 @@ var CookiePolicyOptions = new CookiePolicyOptions
 
 
 var app = builder.Build();
-
 
 app.MapEndpoints(realpath);
 

@@ -1,6 +1,11 @@
 using System.IO.Compression;
+using System.Security.Claims;
 using FileTypeChecker;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using BC = BCrypt.Net.BCrypt;
 
 public static class MapEndpointsHelper
 {
@@ -46,14 +51,41 @@ public static class MapEndpointsHelper
 
         }).DisableAntiforgery();
 
-        /*
+        
 
-        app.MapPost("/api/login", async (string password, FileStorageContext context) =>
+        app.MapPost("/api/login", async ([FromBody]PasswordDto passwordDto, FileStorageContext context, HttpContext httpContext) =>
         {
-            if(context.Settings)
+            
+            string hashedPasswordStored = context.Settings.FirstOrDefault().VaultPasswordHashed;
+
+            if (string.IsNullOrEmpty(passwordDto.Password))
             {
-                // Handle login logic
+                return Results.Unauthorized();     
             }
+
+            if(BC.Verify(passwordDto.Password, hashedPasswordStored))
+            {
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Role, "Administrator")
+                };
+
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+                var authProperties = new AuthenticationProperties();
+                authProperties.Items.Add("IP", httpContext.Connection.RemoteIpAddress.ToString());
+                authProperties.Items.Add("User-Agent", httpContext.Request.Headers["User-Agent"]);
+
+
+                await httpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity),
+                    authProperties
+                );
+
+                return Results.Ok();
+            } 
+            return Results.Unauthorized();
         });
 
         /*
