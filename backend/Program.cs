@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using BC = BCrypt.Net.BCrypt;
@@ -20,6 +21,13 @@ else
     realpath = "/app/storage";
 }
 
+builder.Services.AddAuthorization();
+
+builder.Services.AddAuthorizationBuilder().AddPolicy("Administrator", policy =>
+{
+    policy.RequireRole("Administrator");
+});
+
 builder.Services.AddSingleton<IPostConfigureOptions<CookieAuthenticationOptions>,PostConfigureCookieOptions>();
 
 builder.Services.AddSingleton<ITicketStore, SessionStore>();
@@ -29,6 +37,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
         options.SlidingExpiration = true;
+        options.Events.OnRedirectToLogin = context =>
+        {
+            context.Response.StatusCode = 401;
+            return Task.CompletedTask;
+        };
         
     });
 
@@ -45,6 +58,7 @@ var app = builder.Build();
 app.MapEndpoints(realpath);
 
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseCookiePolicy(CookiePolicyOptions);
 

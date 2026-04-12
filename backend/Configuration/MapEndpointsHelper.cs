@@ -49,7 +49,7 @@ public static class MapEndpointsHelper
             }
             return Results.Conflict();
 
-        }).DisableAntiforgery();
+        }).DisableAntiforgery().RequireAuthorization("Administrator");
 
         
 
