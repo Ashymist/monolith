@@ -27,15 +27,19 @@ public static class MapEndpointsHelper
             {
                 using var filestream = File.Create(fullFilePath);
                 await file.CopyToAsync(filestream);
+                filestream.Close();
 
-                // string reference = $"/storage/{(string.IsNullOrEmpty(normalizedPath) ? "" : normalizedPath + "/")}{file.FileName}";
+                using var fileTypeStream = File.OpenRead(fullFilePath);
 
-                filestream.Seek(0, SeekOrigin.Begin);
+                string type;
+
+                type = FileTypeValidator.GetFileType(fileTypeStream).Name;
+                
 
                 StoredFile storedFile = new StoredFile
                 {
                     FilePath = fullFilePath,
-                    Type = FileTypeValidator.GetFileType(filestream).Name,
+                    Type = type,
                     ByteSize = file.Length,
                     LastUpdated = DateTime.UtcNow,
                     CreatedAt = DateTime.UtcNow,
@@ -47,7 +51,7 @@ public static class MapEndpointsHelper
 
                 return Results.Ok();
             }
-            return Results.Conflict();
+            return Results.BadRequest("File already exists at given filepath.");
 
         }).DisableAntiforgery().RequireAuthorization("Administrator");
 
