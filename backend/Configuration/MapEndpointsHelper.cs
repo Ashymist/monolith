@@ -206,24 +206,24 @@ public static class MapEndpointsHelper
             return Results.NotFound();
         });
 
-        /*
+        
         app.MapDelete("/api/storage/{*path}", async (string? path, FileStorageContext context) =>
         {
             string normalizedPath = NormalizePath(path);
-            string fullpath = $"{realpath}/{normalizedPath}";
+            string fullpath = $"{realpath}{(string.IsNullOrEmpty(normalizedPath) ? string.Empty : "/" + normalizedPath)}";
 
             if (File.Exists(fullpath))
             {
                 
                 File.Delete(fullpath);
-                context.Remove(context.Files.FirstOrDefault(f => f.Reference.StartsWith($"/storage/{Path.GetDirectoryName(normalizedPath)}") && f.Name == Path.GetFileName(normalizedPath)));
+                context.Remove(context.Files.FirstOrDefault(f => f.FilePath.StartsWith(fullpath) && f.Name == Path.GetFileName(normalizedPath)));
                 context.SaveChanges();
                 return Results.Ok();
             } else if (Directory.Exists(fullpath))
             {
                 
                 if (!string.IsNullOrEmpty(normalizedPath)) {
-                    context.RemoveRange(context.Files.Where(f=>f.Reference.StartsWith($"/storage/{normalizedPath}/")));
+                    context.RemoveRange(context.Files.Where(f=>f.FilePath.StartsWith(fullpath)));
                     Directory.Delete(fullpath, true);
                 }
                 else {
@@ -241,6 +241,7 @@ public static class MapEndpointsHelper
             return Results.NotFound();
         });
 
+        /*
         app.MapPatch("api/storage/{*path}", async (string? path, FileStorageContext context, HttpRequest req) =>
         {
             if(string.IsNullOrEmpty(path)) return Results.BadRequest("Can't change the root folder");
