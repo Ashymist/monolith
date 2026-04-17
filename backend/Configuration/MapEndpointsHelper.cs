@@ -3,6 +3,7 @@ using System.Security.Claims;
 using FileTypeChecker;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BC = BCrypt.Net.BCrypt;
@@ -168,12 +169,15 @@ public static class MapEndpointsHelper
             return Results.NotFound();
         });
 
-        /*
+        
 
-        app.MapGet("/api/download/storage/{*path}", async(string? path, FileStorageContext context, HttpResponse res) =>
+        app.MapGet("/api/download/storage/{*path}", async(string? path, FileStorageContext context, HttpResponse res, HttpContext httpContext) =>
         {
+            var syncIOFeature = httpContext.Features.Get<IHttpBodyControlFeature>();
+            syncIOFeature.AllowSynchronousIO = true;
+
             string normalizedPath = NormalizePath(path);
-            string fullpath = $"{realpath}/{normalizedPath}";
+            string fullpath = $"{realpath}{(string.IsNullOrEmpty(normalizedPath) ? string.Empty : "/" + normalizedPath)}";
 
 
             if(File.Exists(fullpath))
@@ -202,6 +206,7 @@ public static class MapEndpointsHelper
             return Results.NotFound();
         });
 
+        /*
         app.MapDelete("/api/storage/{*path}", async (string? path, FileStorageContext context) =>
         {
             string normalizedPath = NormalizePath(path);
