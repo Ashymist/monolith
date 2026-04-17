@@ -32,8 +32,23 @@ public static class MapEndpointsHelper
                 using var fileTypeStream = File.OpenRead(fullFilePath);
 
                 string type;
-
-                type = FileTypeValidator.GetFileType(fileTypeStream).Name;
+                try
+                {
+                    type = FileTypeValidator.GetFileType(fileTypeStream).Name;
+                }
+                catch
+                {
+                    try
+                    {
+                        type = Path.GetExtension(fullFilePath);
+                    }
+                    catch
+                    {
+                        type = "File";
+                    }
+                    
+                }
+                
                 
 
                 StoredFile storedFile = new StoredFile
@@ -92,7 +107,7 @@ public static class MapEndpointsHelper
             return Results.Unauthorized();
         });
 
-        /*
+        
 
         app.MapGet("/api/storage/{*path}", async(string? path, HttpRequest req, FileStorageContext context) =>
         {
@@ -103,11 +118,11 @@ public static class MapEndpointsHelper
             if (File.Exists(fullpath))
             {
                 if(!string.IsNullOrEmpty(searchQuery)) return Results.BadRequest("Query parameter is not allowed when requesting a file.");
-                StoredFile? result = await context.Files.FirstOrDefaultAsync(f => f.Reference == $"/storage/{normalizedPath}");
-                if(result == null) return Results.NotFound();
+                StoredFile? result = await context.Files.FirstOrDefaultAsync(f => f.FilePath == fullpath);
+                if(result == null) return Results.NotFound(); // TODO : orphan file alert
                 FileDto fileDto = new FileDto
                 {
-                    Reference = result.Reference,
+                    Reference = $"/api/storage/{normalizedPath}",
                     Type = result.Type,
                     ByteSize = result.ByteSize,
                     LastUpdated = result.LastUpdated,
@@ -121,10 +136,10 @@ public static class MapEndpointsHelper
                 if (!string.IsNullOrEmpty(searchQuery))
                 {
                     var fileDtos = await context.Files
-                    .Where(f => f.Reference.StartsWith($"/storage/{normalizedPath}") && f.Name.Contains(searchQuery))
+                    .Where(f => f.FilePath.StartsWith(fullpath) && f.Name.Contains(searchQuery))
                     .Select(f => new FileDto
                     {
-                        Reference = f.Reference,
+                        Reference = $"/api/storage/{(string.IsNullOrEmpty(normalizedPath) ? string.Empty : normalizedPath + "/")}{f.Name}",
                         Type = f.Type,
                         ByteSize = f.ByteSize,
                         LastUpdated = f.LastUpdated,
@@ -136,10 +151,10 @@ public static class MapEndpointsHelper
                 else
                 {
                     var fileDtos = await context.Files
-                    .Where(f => f.Reference.StartsWith($"/storage/{normalizedPath}"))
+                    .Where(f => f.FilePath.StartsWith(fullpath))
                     .Select(f => new FileDto
                     {
-                        Reference = f.Reference,
+                        Reference = $"/api/storage/{(string.IsNullOrEmpty(normalizedPath) ? string.Empty : normalizedPath + "/")}{f.Name}",
                         Type = f.Type,
                         ByteSize = f.ByteSize,
                         LastUpdated = f.LastUpdated,
@@ -152,6 +167,8 @@ public static class MapEndpointsHelper
 
             return Results.NotFound();
         });
+
+        /*
 
         app.MapGet("/api/download/storage/{*path}", async(string? path, FileStorageContext context, HttpResponse res) =>
         {
