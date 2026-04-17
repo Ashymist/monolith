@@ -241,7 +241,7 @@ public static class MapEndpointsHelper
             return Results.NotFound();
         });
 
-        /*
+        
         app.MapPatch("api/storage/{*path}", async (string? path, FileStorageContext context, HttpRequest req) =>
         {
             if(string.IsNullOrEmpty(path)) return Results.BadRequest("Can't change the root folder");
@@ -267,8 +267,8 @@ public static class MapEndpointsHelper
 
 
                 string referenceQuery = $"/storage/{normalizedPath}";
-                var file = context.Files.FirstOrDefault(f => f.Reference == referenceQuery);
-                file.Reference = $"/storage/{(string.IsNullOrEmpty(normalizedNewPathQuery) ? (string.IsNullOrEmpty(relativePath) ? string.Empty : relativePath + "/") : normalizedNewPathQuery + "/")}{(string.IsNullOrEmpty(newNameQuery) ? filename : newNameQuery)}";
+                var file = context.Files.FirstOrDefault(f => f.FilePath == fullpath);
+                file.FilePath = $"{realpath}/{(string.IsNullOrEmpty(normalizedNewPathQuery) ? (string.IsNullOrEmpty(relativePath) ? string.Empty : relativePath + "/") : normalizedNewPathQuery + "/")}{(string.IsNullOrEmpty(newNameQuery) ? filename : newNameQuery)}";
                 file.Name = string.IsNullOrEmpty(newNameQuery) ? filename : newNameQuery;
                 file.LastUpdated = DateTime.UtcNow;
                 context.SaveChanges();
@@ -286,10 +286,10 @@ public static class MapEndpointsHelper
                 if(!Directory.Exists(Path.GetDirectoryName(newPath))) Directory.CreateDirectory(Path.GetDirectoryName(newPath));
                 Directory.Move(fullpath,newPath);
 
-                var files = context.Files.Where(f => f.Reference.StartsWith($"/storage/{normalizedPath}"));
+                var files = context.Files.Where(f => f.FilePath.StartsWith(fullpath));
                 foreach(var file in files)
                 {
-                    file.Reference = $"/storage/{(string.IsNullOrEmpty(normalizedNewPathQuery) ? 
+                    file.FilePath= $"{fullpath}/{(string.IsNullOrEmpty(normalizedNewPathQuery) ? 
                     (string.IsNullOrEmpty(relativePath) ? string.Empty : relativePath + "/") 
                     : normalizedNewPathQuery + "/")}{(string.IsNullOrEmpty(newNameQuery) ? filename : newNameQuery)}/{file.Name}";
                 }
@@ -300,7 +300,7 @@ public static class MapEndpointsHelper
             }
             return Results.NotFound();
         });
-        */
+        
     }
 
     public static string NormalizePath(string? path)
