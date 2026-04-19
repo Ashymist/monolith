@@ -167,7 +167,7 @@ public static class MapEndpointsHelper
             }
 
             return Results.NotFound();
-        });
+        }).RequireAuthorization("Administrator");
 
         
 
@@ -204,7 +204,7 @@ public static class MapEndpointsHelper
             }
 
             return Results.NotFound();
-        });
+        }).RequireAuthorization("Administrator");
 
         
         app.MapDelete("/api/storage/{*path}", async (string? path, FileStorageContext context) =>
@@ -239,7 +239,7 @@ public static class MapEndpointsHelper
             }
 
             return Results.NotFound();
-        });
+        }).RequireAuthorization("Administrator");
 
         
         app.MapPatch("api/storage/{*path}", async (string? path, FileStorageContext context, HttpRequest req) =>
@@ -299,7 +299,7 @@ public static class MapEndpointsHelper
 
             }
             return Results.NotFound();
-        });
+        }).RequireAuthorization("Administrator");
         
     }
 
