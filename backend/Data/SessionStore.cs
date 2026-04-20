@@ -41,7 +41,7 @@ public class SessionStore : ITicketStore
             if(session != null)
             {
                 session.Value = SerializeToBytes(ticket);
-                session.LastUsedAt = DateTime.Now;
+                session.LastUsedAt = DateTimeOffset.UtcNow;
                 session.ExpireAt = (DateTimeOffset)ticket.Properties.ExpiresUtc;
 
             }

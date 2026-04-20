@@ -15,7 +15,7 @@ public static class MapEndpointsHelper
         app.MapPost("/api/storage/{*path}", async (IFormFile file, string? path, FileStorageContext context) =>
         {
             string normalizedPath = NormalizePath(path);
-            string directory = $"{realpath}/{normalizedPath}";
+            string directory = $"{realpath}{(string.IsNullOrEmpty(normalizedPath) ? string.Empty : "/" + normalizedPath)}";
 
             if(!Directory.Exists(directory))
             {
@@ -54,7 +54,7 @@ public static class MapEndpointsHelper
 
                 StoredFile storedFile = new StoredFile
                 {
-                    FilePath = fullFilePath,
+                    FilePath = Path.Combine(normalizedPath, file.FileName),
                     Type = type,
                     ByteSize = file.Length,
                     LastUpdated = DateTime.UtcNow,
@@ -114,16 +114,16 @@ public static class MapEndpointsHelper
         {
             string? searchQuery = req.Query["query"];
             string? normalizedPath = NormalizePath(path);
-            string fullpath = $"{realpath}/{normalizedPath}";
+            string fullpath = $"{realpath}{(string.IsNullOrEmpty(normalizedPath) ? string.Empty : "/" + normalizedPath)}";
 
             if (File.Exists(fullpath))
             {
                 if(!string.IsNullOrEmpty(searchQuery)) return Results.BadRequest("Query parameter is not allowed when requesting a file.");
-                StoredFile? result = await context.Files.FirstOrDefaultAsync(f => f.FilePath == fullpath);
+                StoredFile? result = await context.Files.FirstOrDefaultAsync(f => f.FilePath == normalizedPath);
                 if(result == null) return Results.NotFound(); // TODO : orphan file alert
                 FileDto fileDto = new FileDto
                 {
-                    Reference = $"/api/storage/{normalizedPath}",
+                    Reference = $"/api/storage/{result.FilePath}",
                     Type = result.Type,
                     ByteSize = result.ByteSize,
                     LastUpdated = result.LastUpdated,
@@ -137,10 +137,10 @@ public static class MapEndpointsHelper
                 if (!string.IsNullOrEmpty(searchQuery))
                 {
                     var fileDtos = await context.Files
-                    .Where(f => f.FilePath.StartsWith(fullpath) && f.Name.Contains(searchQuery))
+                    .Where(f => f.FilePath.StartsWith(normalizedPath) && f.Name.Contains(searchQuery))
                     .Select(f => new FileDto
                     {
-                        Reference = $"/api/storage/{(string.IsNullOrEmpty(normalizedPath) ? string.Empty : normalizedPath + "/")}{f.Name}",
+                        Reference = $"/api/storage/{f.FilePath}",
                         Type = f.Type,
                         ByteSize = f.ByteSize,
                         LastUpdated = f.LastUpdated,
@@ -152,10 +152,10 @@ public static class MapEndpointsHelper
                 else
                 {
                     var fileDtos = await context.Files
-                    .Where(f => f.FilePath.StartsWith(fullpath))
+                    .Where(f => f.FilePath.StartsWith(normalizedPath))
                     .Select(f => new FileDto
                     {
-                        Reference = $"/api/storage/{(string.IsNullOrEmpty(normalizedPath) ? string.Empty : normalizedPath + "/")}{f.Name}",
+                        Reference = $"/api/storage/{f.FilePath}",
                         Type = f.Type,
                         ByteSize = f.ByteSize,
                         LastUpdated = f.LastUpdated,
@@ -216,14 +216,14 @@ public static class MapEndpointsHelper
             {
                 
                 File.Delete(fullpath);
-                context.Remove(context.Files.FirstOrDefault(f => f.FilePath.StartsWith(fullpath) && f.Name == Path.GetFileName(normalizedPath)));
+                context.Remove(context.Files.FirstOrDefault(f => f.FilePath.StartsWith(normalizedPath) && f.Name == Path.GetFileName(normalizedPath)));
                 context.SaveChanges();
                 return Results.Ok();
             } else if (Directory.Exists(fullpath))
             {
                 
                 if (!string.IsNullOrEmpty(normalizedPath)) {
-                    context.RemoveRange(context.Files.Where(f=>f.FilePath.StartsWith(fullpath)));
+                    context.RemoveRange(context.Files.Where(f=>f.FilePath.StartsWith(normalizedPath)));
                     Directory.Delete(fullpath, true);
                 }
                 else {
@@ -247,7 +247,7 @@ public static class MapEndpointsHelper
             if(string.IsNullOrEmpty(path)) return Results.BadRequest("Can't change the root folder");
             string normalizedPath = NormalizePath(path);
 
-            string fullpath = $"{realpath}/{normalizedPath}";
+            string fullpath = $"{realpath}{(string.IsNullOrEmpty(normalizedPath) ? string.Empty : "/" + normalizedPath)}";
             string? newPathQuery = req.Query["newpath"];
             string? newNameQuery = req.Query["newname"];
             string? normalizedNewPathQuery = NormalizePath(newPathQuery);
@@ -256,7 +256,7 @@ public static class MapEndpointsHelper
             
             if (File.Exists(fullpath))
             {
-                string newPath = $"{realpath}/";
+                string newPath = $"";
                 if (!string.IsNullOrEmpty(newPathQuery)) newPath = Path.Combine(newPath,normalizedNewPathQuery);
                 else newPath = Path.Combine(newPath,relativePath);
                 if (!string.IsNullOrEmpty(newNameQuery)) newPath = Path.Combine(newPath,newNameQuery);
@@ -266,9 +266,9 @@ public static class MapEndpointsHelper
                 File.Move(fullpath,newPath);
 
 
-                string referenceQuery = $"/storage/{normalizedPath}";
-                var file = context.Files.FirstOrDefault(f => f.FilePath == fullpath);
-                file.FilePath = $"{realpath}/{(string.IsNullOrEmpty(normalizedNewPathQuery) ? (string.IsNullOrEmpty(relativePath) ? string.Empty : relativePath + "/") : normalizedNewPathQuery + "/")}{(string.IsNullOrEmpty(newNameQuery) ? filename : newNameQuery)}";
+                //string referenceQuery = $"/storage/{normalizedPath}";
+                var file = context.Files.FirstOrDefault(f => f.FilePath == normalizedPath);
+                file.FilePath = $"{(string.IsNullOrEmpty(normalizedNewPathQuery) ? (string.IsNullOrEmpty(relativePath) ? string.Empty : relativePath + "/") : normalizedNewPathQuery + "/")}{(string.IsNullOrEmpty(newNameQuery) ? filename : newNameQuery)}";
                 file.Name = string.IsNullOrEmpty(newNameQuery) ? filename : newNameQuery;
                 file.LastUpdated = DateTime.UtcNow;
                 context.SaveChanges();
@@ -286,10 +286,10 @@ public static class MapEndpointsHelper
                 if(!Directory.Exists(Path.GetDirectoryName(newPath))) Directory.CreateDirectory(Path.GetDirectoryName(newPath));
                 Directory.Move(fullpath,newPath);
 
-                var files = context.Files.Where(f => f.FilePath.StartsWith(fullpath));
+                var files = context.Files.Where(f => f.FilePath.StartsWith(normalizedPath));
                 foreach(var file in files)
                 {
-                    file.FilePath= $"{fullpath}/{(string.IsNullOrEmpty(normalizedNewPathQuery) ? 
+                    file.FilePath= $"{(string.IsNullOrEmpty(normalizedNewPathQuery) ? 
                     (string.IsNullOrEmpty(relativePath) ? string.Empty : relativePath + "/") 
                     : normalizedNewPathQuery + "/")}{(string.IsNullOrEmpty(newNameQuery) ? filename : newNameQuery)}/{file.Name}";
                 }
