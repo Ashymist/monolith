@@ -1,0 +1,8 @@
+.mainbody_grid{
+    height: 100%;
+    display:grid;
+    grid-template-columns: 2fr 10fr;
+    grid-template-rows: 1fr 9fr;
+
+    background-color: azure;
+}

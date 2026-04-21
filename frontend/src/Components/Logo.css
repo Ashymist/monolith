@@ -1,0 +1,21 @@
+.logo_text{
+    font-family: 'Montserrat';
+    font-weight: 700;
+    font-size: 30px;
+    color: azure;
+}
+
+
+.logo{
+    grid-row: 1/2;
+    grid-column: 1/2;
+
+    display:flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo_picture{
+    height: 30px;
+    left: -30px;
+}
