@@ -58,7 +58,7 @@ function Home(){
 
     return(
         <Mainbody>
-            <Header path={currentPath}></Header>
+            <Header path={currentPath} updatePath={setPath}></Header>
             <Sidebar></Sidebar>
             <Filegrid>
                 {foldersToRender.map(foldername => (
