@@ -17,8 +17,6 @@ function Home(){
     const [currentPath, setPath] = useState("/storage/");
     const navigateToLogin = useNavigate();
 
-    {/*useEffect(() => {console.log(files)}, [files]);*/}
-
     useEffect(() => {
         const authorize = async () => {
             const res = await fetch("http://localhost:5173/api/storage");
@@ -36,21 +34,25 @@ function Home(){
     },[]);
 
     const{filesToRender, foldersToRender} = useMemo(() => {
+        console.log("useMemo is activated")
+        console.log("currentpath is" + currentPath);
         const foldersToRender = new Set();
         const filesToRender = [];
         
         files.forEach(file => {
-            const path = file.reference.replace("/api/storage/","");
-            if(renderAsFile(path, currentPath)){
-                filesToRender.push(file);
-            } else {
-                foldersToRender.add(path.replace(currentPath, "").split("/")[0]);
+            if(file.reference.startsWith("/api"+currentPath)){
+                const path = file.reference.replace("/api","");
+                if(renderAsFile(path, currentPath)){
+                    filesToRender.push(file);
+                } else {
+                    foldersToRender.add(path.replace(currentPath, "").split("/")[0]);
+                }
             }
+            
         })
 
         console.log(foldersToRender);
         console.log(filesToRender);
-
         return {filesToRender, foldersToRender:[...foldersToRender]}
     },[files, currentPath]);
 
@@ -63,20 +65,22 @@ function Home(){
                     <Folder
                         name = {foldername}
                         pointTo = {foldername + "/"}
+                        currentPath={currentPath}
+                        updatePath={setPath}
                         key={currentPath + foldername + "/"}
                     />
                 ))}
                 
 
                 {filesToRender.map(filesToRender => {
-                        return(<File 
-                            reference={filesToRender.reference}
-                            type={filesToRender.type}
-                            byteSize={filesToRender.byteSize}
-                            lastUpdated={filesToRender.lastUpdated}
-                            name={filesToRender.name}
-                            key={filesToRender.reference}
-                        />)
+                    return(<File 
+                        reference={filesToRender.reference}
+                        type={filesToRender.type}
+                        byteSize={filesToRender.byteSize}
+                        lastUpdated={filesToRender.lastUpdated}
+                        name={filesToRender.name}
+                        key={filesToRender.reference}
+                    />)
                 })}
             </Filegrid>
         </Mainbody>
@@ -89,7 +93,5 @@ function renderAsFile(path, currentPath){
     console.log(prefix);
     if(prefix == -1) return true; else return false; 
 }
-
-
 
 export default Home
