@@ -1,0 +1,21 @@
+.folder{
+    width: 150px;
+    height: 150px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.folder_icon{
+    width: 100px;
+    height:100px;
+}
+
+.foldername{
+    font-family: 'Montserrat';
+    font-weight: 700;
+    font-size: 15px;
+    color: black;
+}
