@@ -3,4 +3,10 @@
     font-weight: 500;
     font-size: 20px;
     color: white;
+
+    cursor: pointer;
+}
+
+.logout:hover{
+    text-decoration: underline;
 }

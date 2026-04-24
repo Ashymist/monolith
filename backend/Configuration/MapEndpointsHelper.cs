@@ -108,7 +108,10 @@ public static class MapEndpointsHelper
             return Results.Unauthorized();
         });
 
-        
+        app.MapPost("/api/logout", async(HttpContext context) =>
+        {
+            await context.SignOutAsync();
+        }).RequireAuthorization("Administrator");
 
         app.MapGet("/api/storage/{*path}", async(string? path, HttpRequest req, FileStorageContext context) =>
         {
