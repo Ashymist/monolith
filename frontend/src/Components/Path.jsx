@@ -2,9 +2,7 @@ import './Path.css'
 import PathPart from './PathPart.jsx'
 
 function Path({path,updatePath}){
-    console.log(path);
     const parts = path.split('/').filter((word) =>  word != "");
-    console.log(parts);
     return(
         <>
             <div className='path'>

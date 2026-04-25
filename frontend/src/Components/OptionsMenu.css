@@ -1,0 +1,40 @@
+.menu{
+    padding: 0;
+    margin: 0;
+    visibility: hidden;
+    position: absolute;
+    background-color: rgb(29, 29, 29);
+    width: 140px;
+    height: 110px;
+    border-radius: 7px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+}
+
+.menu.active{
+    visibility: visible;
+}
+
+.button{
+    height:30px;
+    font-family: 'Montserrat';
+    font-weight: 500;
+    font-size: 15px;
+    color: white;
+    background-color: transparent;
+    border-style: none;
+    cursor: pointer;
+}
+
+.button:hover{
+    text-decoration: underline;
+}
+
+.divider{
+    margin-top: 3px;
+    margin-bottom: 3px;
+    width:100%;
+    box-sizing: border-box;
+}

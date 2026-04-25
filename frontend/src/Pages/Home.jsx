@@ -9,12 +9,23 @@ import Filegrid from "../Components/Filegrid";
 import File from "../Components/File.jsx"
 import { v4 as uuidv4 } from 'uuid';
 import Folder from "../Components/Folder.jsx"
+import OptionsMenu from "../Components/OptionsMenu.jsx";
+import RenameMenu from "../Components/RenameMenu.jsx";
 
 
 function Home(){
 
     const [files, setFiles] = useState([]);
     const [currentPath, setPath] = useState("/storage/");
+    const [contextMenu, setContextMenu] = useState({
+        position: {x:0,y:0},
+        toggled: false,
+        file: ""
+    });
+    const [renameMenu, setRenameMenu] = useState({
+        file: "",
+        toggled : false
+    });
     const navigateToLogin = useNavigate();
 
     useEffect(() => {
@@ -33,9 +44,50 @@ function Home(){
         authorize();
     },[]);
 
+    const updateFiles = async () => {
+        const res = await fetch("http://localhost:5173/api/storage");
+            const status = res.status;
+            if(status == 401 ) navigateToLogin('/login');
+            if(status == 200) {
+                res.json().then(data => {
+                    setFiles(data);
+            });
+        }
+    }
+
+    const handleContextMenu = (e, reference) => {
+        e.preventDefault();
+        setContextMenu({
+            position:{x:e.pageX, y:e.pageY},
+            toggled:true,
+            file:reference
+        })
+    };
+
+    const hideContextMenu = (e) => {
+        e.preventDefault();
+        setContextMenu({
+            position:{x:0, y:0},
+            toggled:false,
+            file: ""
+        })
+    }
+
+    const openRenameMenu = (reference) => {
+        setRenameMenu({
+            file:reference,
+            toggled:true
+        });
+    }
+
+    const closeRenameMenu = () => {
+        setRenameMenu({
+            file:"",
+            toggled:false
+        })
+    }
+
     const{filesToRender, foldersToRender} = useMemo(() => {
-        console.log("useMemo is activated")
-        console.log("currentpath is" + currentPath);
         const foldersToRender = new Set();
         const filesToRender = [];
         
@@ -50,14 +102,11 @@ function Home(){
             }
             
         })
-
-        console.log(foldersToRender);
-        console.log(filesToRender);
         return {filesToRender, foldersToRender:[...foldersToRender]}
     },[files, currentPath]);
 
     return(
-        <Mainbody>
+        <Mainbody clickHandler={hideContextMenu}>
             <Header path={currentPath} updatePath={setPath}></Header>
             <Sidebar></Sidebar>
             <Filegrid>
@@ -79,18 +128,29 @@ function Home(){
                         byteSize={filesToRender.byteSize}
                         lastUpdated={filesToRender.lastUpdated}
                         name={filesToRender.name}
+                        contextMenuHandler={handleContextMenu}
                         key={filesToRender.reference}
                     />)
                 })}
             </Filegrid>
+
+            <OptionsMenu 
+            isToggled={contextMenu.toggled} 
+            positionX={contextMenu.position.x} 
+            positionY={contextMenu.position.y} 
+            file={contextMenu.file}
+            openRenameMenu={openRenameMenu}
+            />
+
+            <RenameMenu isToggled={renameMenu.toggled} fileReference={renameMenu.file} closeRenameMenu={closeRenameMenu} updateFiles={updateFiles}/>
         </Mainbody>
+
+        
     );
 }
 
 function renderAsFile(path, currentPath){
-    console.log(path);
     const prefix = path.replace(currentPath, "").indexOf('/');
-    console.log(prefix);
     if(prefix == -1) return true; else return false; 
 }
 

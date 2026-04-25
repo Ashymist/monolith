@@ -1,8 +1,8 @@
 import './Mainbody.css'
 
-function Mainbody({children}){
+function Mainbody({children, clickHandler}){
     return(
-        <div className="mainbody_grid">
+        <div className="mainbody_grid" onClick={clickHandler}>
             {children}
         </div>
     );

@@ -253,24 +253,32 @@ public static class MapEndpointsHelper
             string fullpath = $"{realpath}{(string.IsNullOrEmpty(normalizedPath) ? string.Empty : "/" + normalizedPath)}";
             string? newPathQuery = req.Query["newpath"];
             string? newNameQuery = req.Query["newname"];
+            if(string.IsNullOrEmpty(newNameQuery) && string.IsNullOrEmpty(newPathQuery)) return Results.BadRequest("A newname or newpath query must be present in the request");
             string? normalizedNewPathQuery = NormalizePath(newPathQuery);
             string? filename = Path.GetFileName(fullpath);
             string? relativePath = NormalizePath(Path.GetDirectoryName(normalizedPath));
             
             if (File.Exists(fullpath))
             {
-                string newPath = $"";
+                string newPath = string.Empty;
                 if (!string.IsNullOrEmpty(newPathQuery)) newPath = Path.Combine(newPath,normalizedNewPathQuery);
                 else newPath = Path.Combine(newPath,relativePath);
                 if (!string.IsNullOrEmpty(newNameQuery)) newPath = Path.Combine(newPath,newNameQuery);
                 else newPath = Path.Combine(newPath,filename);
-
-                if(!Directory.Exists(Path.GetDirectoryName(newPath))) Directory.CreateDirectory(Path.GetDirectoryName(newPath));
-                File.Move(fullpath,newPath);
+                if (!string.IsNullOrEmpty(Path.GetDirectoryName(newPath)))
+                {
+                    if(!Directory.Exists(Path.GetDirectoryName(newPath))) Directory.CreateDirectory(Path.GetDirectoryName(newPath));
+                    File.Move(fullpath,newPath); 
+                } else
+                {
+                    File.Move(fullpath,Path.Combine(realpath, newNameQuery));
+                }
+                
 
 
                 //string referenceQuery = $"/storage/{normalizedPath}";
                 var file = context.Files.FirstOrDefault(f => f.FilePath == normalizedPath);
+                if(file == null) return Results.NotFound();
                 file.FilePath = $"{(string.IsNullOrEmpty(normalizedNewPathQuery) ? (string.IsNullOrEmpty(relativePath) ? string.Empty : relativePath + "/") : normalizedNewPathQuery + "/")}{(string.IsNullOrEmpty(newNameQuery) ? filename : newNameQuery)}";
                 file.Name = string.IsNullOrEmpty(newNameQuery) ? filename : newNameQuery;
                 file.LastUpdated = DateTime.UtcNow;
