@@ -1,8 +1,8 @@
 import './Filegrid.css'
 
-function Filegrid({children}){
+function Filegrid({children, handleDrop}){
     return(
-        <div className="file_grid">
+        <div className="file_grid" onDrop={(e) => handleDrop(e)} onDragOver={(e) => {e.preventDefault()}}>
                 {children}
         </div>
     );

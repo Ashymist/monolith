@@ -28,6 +28,8 @@ function Home(){
     });
     const navigateToLogin = useNavigate();
 
+    const[dropZone, setDropZone] = useState(false);
+
     useEffect(() => {
         const authorize = async () => {
             const res = await fetch("http://localhost:5173/api/storage");
@@ -87,6 +89,25 @@ function Home(){
         })
     }
 
+    const handleFileDrop = async (e) => {
+        e.preventDefault();
+        const files = Array.from(event.dataTransfer.files);
+        console.log(files[0]);
+
+        const data = new FormData();
+        data.append("file",files[0])
+
+        const requestOptions = {
+            method : "POST",
+            body: data
+        }
+
+        const res = await fetch(`/api${currentPath}`, requestOptions)
+        updateFiles();
+    }
+
+    
+
     const{filesToRender, foldersToRender} = useMemo(() => {
         const foldersToRender = new Set();
         const filesToRender = [];
@@ -109,7 +130,7 @@ function Home(){
         <Mainbody clickHandler={hideContextMenu}>
             <Header path={currentPath} updatePath={setPath}></Header>
             <Sidebar></Sidebar>
-            <Filegrid>
+            <Filegrid handleDrop={handleFileDrop}>
                 {foldersToRender.map(foldername => (
                     <Folder
                         name = {foldername}
@@ -144,6 +165,7 @@ function Home(){
             />
 
             <RenameMenu isToggled={renameMenu.toggled} fileReference={renameMenu.file} closeRenameMenu={closeRenameMenu} updateFiles={updateFiles}/>
+            
         </Mainbody>
 
         

@@ -17,6 +17,7 @@ function OptionsMenu({isToggled,positionX, positionY, file, openRenameMenu, upda
                 updateFiles();
 
             }}>Delete</button>
+            
         </menu>
     );
 }
