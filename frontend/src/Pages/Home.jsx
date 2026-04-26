@@ -140,6 +140,7 @@ function Home(){
             positionY={contextMenu.position.y} 
             file={contextMenu.file}
             openRenameMenu={openRenameMenu}
+            updateFiles={updateFiles}
             />
 
             <RenameMenu isToggled={renameMenu.toggled} fileReference={renameMenu.file} closeRenameMenu={closeRenameMenu} updateFiles={updateFiles}/>
